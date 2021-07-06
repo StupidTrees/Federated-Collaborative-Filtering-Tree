@@ -1,36 +1,37 @@
-from model.leaf import Leaf
-from model.root import Root
 from matplotlib import pyplot as plt
 
-from train.aggregator import Aggregator
+import train.aggregator
+from model.builder import build_tree_horizontal
+from exp import agg6, agg4
 
-l1 = Leaf('c1', file_name='data/horizontal/full_U1', verbose=1)
-l2 = Leaf('c2', file_name='data/horizontal/full_U2', verbose=0)
-l3 = Leaf('c3', file_name='data/horizontal/full_U3', verbose=0)
-l4 = Leaf('c4', file_name='data/horizontal/full_U4', verbose=0)
-l5 = Leaf('c5', file_name='data/horizontal/full_U5', verbose=0)
-l6 = Leaf('c6', file_name='data/horizontal/full_U6', verbose=0)
+# 构建两层树结构
 
-m1 = Root('m1', k=10, clients=[l1, l2], verbose=1, expand_children=True)
-m2 = Root('m2', k=10, clients=[l3, l4], verbose=1, expand_children=True)
-m3 = Root('m3', k=10, clients=[l5, l6], verbose=1, expand_children=True)
+tree1 = build_tree_horizontal('data/full', [50, 50, 50, 50], [[2, 2], [2]], name_prefix='t1_')
+root_1 = tree1.root
+root_1.aggregator.initial_interval = 4
+root_1.verbose = 1
+root_1.expand_to_children()
+tree1.get_at(1, 0).verbose = 1
+tree1.get_at(1, 1).verbose = 1
 
-r = Root('root', k=10, clients=[m1, m2, m3], verbose=1)
-r.train(epoch=8, asy=False, lambda_2=0.12, lambda_1=0.12, init_lr=0.03, trans_delay=0.0, fake_foreign=False)
+root_1.train(epoch=9, lambda_2=0.09, lambda_1=0.09, init_lr=0.08, trans_delay=0.0, fake_foreign=False)
+root_1.history.plot('3-layer')
+tree1.get_at(1, 0).history.plot('3-layer-r1')
+tree1.get_at(1, 1).history.plot('3-layer-r2')
 
-# r.history.plot('root')
-# m1.history.plot('m1')
-# m2.history.plot('m2')
-# m3.history.plot('m3')
-l1.history.plot('l1')
-# l4.history.plot('l4')
-# l6.history.plot('l6')
-
-l1.reset()
-l1.test_data = m1.test_data
-l1.train(epoch=200, asy=False, lambda_2=0.12, lambda_1=0.12, init_lr=0.02, trans_delay=0.01,
-         fake_foreign=False)
-l1.history.plot('l1-single')
-
-plt.legend()  # 标签
-plt.savefig('all.jpg')
+tree2 = build_tree_horizontal('data/full', [50, 50, 50, 50], [[4]], name_prefix='t2_')
+root_2 = tree2.root
+root_2.verbose = 1
+# tree2.get_at(0, 0).verbose=1
+# tree2.get_at(0,1).verbose=1
+# tree2.get_at(0, 2).verbose=1
+# tree2.get_at(0, 3).verbose=1
+root_2.expand_to_children()
+root_2.train(epoch=16, lambda_2=0.09, lambda_1=0.09, init_lr=0.08, trans_delay=0.0, fake_foreign=False)
+root_2.history.plot('2-layer')
+# tree2.get_at(0, 0).history.plot('2-layer-c1')
+# tree2.get_at(0,1).history.plot('2-layer-c2')
+# tree2.get_at(0, 2).history.plot('2-layer-c3')
+# tree2.get_at(0, 3).history.plot('2-layer-c4')
+plt.legend()
+plt.savefig('layers-compare')

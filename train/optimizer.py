@@ -1,9 +1,10 @@
 class Optimizer:
-    def __init__(self, init_lr=0.02, lr_decay_rate=0.08):
+    def __init__(self, init_lr=0.06, lr_decay_rate=0.002):
         self.lr_decay_rate = lr_decay_rate
         self.init_lr = init_lr
         self.node = None
         self.lr = 0.0
+        self.activate_time = 0
 
     def reset(self):
         pass
@@ -20,6 +21,7 @@ class Optimizer:
         :param parent_epoch: 此时父节点位于哪一轮
         :return: 学习率
         """
+        self.activate_time += 1
         self.lr -= self.lr * self.lr_decay_rate
         return self.lr
 

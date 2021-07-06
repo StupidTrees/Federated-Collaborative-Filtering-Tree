@@ -1,3 +1,5 @@
+import random
+
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import os
@@ -56,6 +58,8 @@ def split_data(raw, size_list=None, horizontal=True, output=True, save_path='dat
         if output:
             outF[file_index].write(line)
         ln += 1
+    for dt, _, _ in data:
+        random.shuffle(dt)
     if output:
         for of in outF:
             of.close()
@@ -100,6 +104,6 @@ def load_data(file, batch_size=32, shuffle=True, tensor=True, test_ratio=0.2, ui
         test_num = int(len(ds) * test_ratio)
         return ds.skip(test_num), ds.take(test_num).unbatch(), user_map, item_map
     else:
+        if shuffle:
+            random.shuffle(data)
         return data[0:int(len(data) * (1 - test_ratio))], data[int(len(data) * (1 - test_ratio)):], user_map, item_map
-
-

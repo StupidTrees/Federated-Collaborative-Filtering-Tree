@@ -10,13 +10,22 @@ class Aggregator:
 
     """
 
-    def __init__(self, interval=1, interval_decay_rate=1 / 3.3):
+    def __init__(self, asy=False, interval=50, interval_decay_rate=1.001):
         self.initial_interval = interval
+        self.asy = asy
         self.interval_decay_rate = interval_decay_rate
+        self.total_grad_list_map = {}  # {iid：[(cname1:grad1), (cname2:grad2)]}
+        self.total_grad_map = {}  # {iid:grad, iid2:grad}
+        self.child_grad_map = {}  # {cname1: grad, cname2: grad}
+        self.interval = float(interval)
+        self.activate_time = 0
         self.node = None
 
     def reset(self):
-        pass
+        self.total_grad_list_map = {}
+        self.child_grad_map = {}
+        self.activate_time = 0
+        self.interval = self.initial_interval
 
     def draw(self, epoch):
         """
@@ -30,16 +39,20 @@ class Aggregator:
             return random.sample(self.node.children, int(len(self.node.children) * percentage))
         return self.node.children
 
-    def interval(self, epoch, child):
+    def get_interval(self, epoch, total_epoch, child):
         """
         决定让某个孩子独自训练多少轮（E）
         :param epoch: 当前节点的训练轮次
+        :param total_epoch 当前节点需要的总训练伦茨
         :param child: 某个孩子
         :return: 孩子在本轮训练中，自己要进行多少轮训练
         """
-        return self.initial_interval + int(self.interval_decay_rate * epoch)
+        self.activate_time += 1
+        self.interval = self.initial_interval * (self.interval_decay_rate ** epoch)
+        rs = max(int(np.sqrt(total_epoch)), int(self.interval))
+        return rs
 
-    def aggregate(self, epoch, child_participate, all_gradients):
+    def aggregate(self, epoch, child_participate, loss, all_gradients):
         """
         梯度（权值)聚合操作
         :param epoch: 当前训练的轮次
@@ -48,15 +61,23 @@ class Aggregator:
             格式为{孩子名称1：{商品1：[梯度1，梯度2...]，商品2:[梯度1，梯度2]}，孩子名称2:...}
         :return:
         """
-        total_gradients_v = {}
-        for _, gradients in all_gradients.items():
+        for cname, gradients in all_gradients.items():
+            if cname not in self.child_grad_map.keys():
+                self.child_grad_map[cname] = {}
             for (iid, grad) in gradients.items():
-                if iid not in total_gradients_v.keys():
-                    total_gradients_v[iid] = []
-                total_gradients_v[iid].append(grad)
-        for (iid, gradients) in total_gradients_v.items():
-            self.node.item_map[iid] += np.average(gradients)
-        return
+                if iid not in self.total_grad_list_map.keys():
+                    self.total_grad_list_map[iid] = []
+                    self.total_grad_map[iid] = 0.0
+                self.total_grad_list_map[iid].append((cname, grad))
+                self.child_grad_map[cname][iid] = grad
+        self.do_aggregate(loss)
+
+    def do_aggregate(self, loss):
+        for (iid, pairs) in self.total_grad_list_map.items():
+            weights = [self.node.weight_map[cn] for cn, g in pairs]
+            gradients = [g for cn, g in pairs]
+            self.total_grad_map[iid] += np.average(gradients, axis=0, weights=weights)
+            self.node.item_map[iid] += np.average(gradients, axis=0, weights=weights)
 
     def dispatch(self, epoch, children_participate):
         """
@@ -66,4 +87,7 @@ class Aggregator:
         :return:
         """
         for child in children_participate:
+            v_map_specified = {}
+            # for iid, grad in self.total_grad_map.items():
+            #     v_map_specified[iid] = self.node.item_map[iid]
             child.update_v(self.node.item_map)
