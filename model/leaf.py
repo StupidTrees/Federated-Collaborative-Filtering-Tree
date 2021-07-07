@@ -1,4 +1,5 @@
 from model.node import *
+from train.adam import Adam
 from train.data import load_data
 import tensorflow as tf
 
@@ -15,7 +16,7 @@ class Leaf(Node):
             self.train_data, self.test_data, users, items = load_data(file=file_name,
                                                                       shuffle=True,
                                                                       batch_size=0,
-                                                                      tensor=True,
+                                                                      tensor=False,
                                                                       test_ratio=0.3)
 
         else:
@@ -23,7 +24,7 @@ class Leaf(Node):
             self.train_data = data[0:int(len(data) * 0.8)]
             self.test_data = data[int(len(data) * 0.8):]
         for uid in users:
-            self.user_map[uid] = tf.random.normal(0, 0.1, k)
+            self.user_map[uid] = np.random.normal(0, 0.1, k)
         for iid in items:
             self.item_map[iid] = np.random.normal(0, 0.1, k)
         self.average_rating = {}
@@ -69,14 +70,16 @@ class Leaf(Node):
             return 0
         return np.sqrt(sum / count)
 
+
+
     def user_size(self):
         return len(self.user_map.keys())
 
-    def update_v(self, v_map):
+    def update_v(self, v_map,hole=True):
         for iid in self.item_map.keys():
             if iid in v_map.keys():
                 self.item_map[iid] = np.copy(v_map[iid])
-                if self.hole_aggregate and iid in self.tmp_gradient_map.keys():  # 挖洞策略，说明更新的v不包括自己上传的梯度，因此要再做一次自己的v更新
+                if self.hole_aggregate and iid in self.tmp_gradient_map.keys() and hole:  # 挖洞策略，说明更新的v不包括自己上传的梯度，因此要再做一次自己的v更新
                     self.item_map[iid] += self.tmp_gradient_map[iid]
 
     def apply_dp(self, iid, v_vec):
@@ -95,8 +98,10 @@ class Leaf(Node):
         Node.do_train(self)
         v_old = {iid: np.copy(vec) for iid, vec in self.item_map.items()}
         self.optimizer.round_begin(init_lr=init_lr)
+        # 为每个向量设置一个Adam优化器
+        v_adams_map = {iid: Adam(weights=v, lr=init_lr) for iid, v in self.item_map.items()}
+        u_adams_map = {uid: Adam(weights=u, lr=init_lr) for uid, u in self.user_map.items()}
         for ste in range(epoch):
-            lr = self.optimizer.get_self_lr(init_lr, ste, parent_ste)
             for (uid, iid, r) in self.train_data:
                 u_vec = self.user_map[uid]
                 v_vec = self.item_map[iid]
@@ -105,8 +110,8 @@ class Leaf(Node):
                 e = (float(r) / 5) - np.dot(u_vec, v_vec.T)
                 vg = (e * u_vec)
                 ug = (e * v_vec)
-                self.user_map[uid] += lr * (ug - lambda_1 * u_vec)
-                self.item_map[iid] += lr * (vg - lambda_2 * v_vec)
+                v_adams_map[iid].minimize(-vg + lambda_1 * v_vec)
+                u_adams_map[uid].minimize(-ug + lambda_1 * u_vec)
             rms = self.RMS(self.test_data)
             self.history.add(time.time() - self.start_time, rms)
             if self.verbose > 0:

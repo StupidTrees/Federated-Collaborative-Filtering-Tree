@@ -47,10 +47,11 @@ class Aggregator:
         :param child: 某个孩子
         :return: 孩子在本轮训练中，自己要进行多少轮训练
         """
+        height = self.node.height
         self.activate_time += 1
         self.interval = self.initial_interval * (self.interval_decay_rate ** epoch)
         rs = max(int(np.sqrt(total_epoch)), int(self.interval))
-        return rs
+        return int(rs / (1 + 2 * (height - 1)))
 
     def aggregate(self, epoch, child_participate, loss, all_gradients):
         """
@@ -79,11 +80,12 @@ class Aggregator:
             self.total_grad_map[iid] += np.average(gradients, axis=0, weights=weights)
             self.node.item_map[iid] += np.average(gradients, axis=0, weights=weights)
 
-    def dispatch(self, epoch, children_participate):
+    def dispatch(self, epoch, children_participate, from_upper=False):
         """
         权值分发操作
         :param epoch: 当前训练的轮次
         :param children_participate: 参与本次训练的孩子列表
+        :param from_upper: 是否是来自更上一层父节点的递归调用
         :return:
         """
         for child in children_participate:

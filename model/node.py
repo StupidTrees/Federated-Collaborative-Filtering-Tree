@@ -4,6 +4,7 @@ import numpy as np
 import time
 from train.history import History
 from train.optimizer import Optimizer
+from functools import cmp_to_key as ctk
 
 
 class Node:
@@ -46,6 +47,9 @@ class Node:
             if int(iid) not in self.item_map.keys():
                 self.item_map[int(iid)] = np.random.normal(0, 0.1, (1, self.K))
                 self.foreign.add(iid)
+
+    def RMS(self, batch):
+        pass
 
     def reset(self):
         """
@@ -100,3 +104,10 @@ class Node:
 
     def update_v(self, v_map):
         pass
+
+
+def cmp_top_k(a, b):
+    if a[1] == b[1]:
+        return a[0] - b[0]
+    else:
+        return a[1] - b[1]

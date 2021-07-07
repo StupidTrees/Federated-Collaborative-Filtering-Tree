@@ -38,30 +38,15 @@ class Root(Node):
                 return pre
         return -1
 
-    def update_v(self, v_map):
+    def update_v(self, v_map, hole=True):
         for iid in self.item_map.keys():
             if iid in v_map.keys():
                 self.item_map[iid] = np.copy(v_map[iid])
-        self.aggregator.dispatch(-1, self.children)
+        self.aggregator.dispatch(-1, self.children, False)
         # for child in self.children:
         #     child.update_v(v_map, False)
 
     def RMS(self, batch):
-        # result = 0.0
-        # count = len(batch)
-        #
-        # for (uid, iid, r) in batch:
-        #     dif_pred = []
-        #     weights = []
-        #     for child in self.children:
-        #         pr = child.predict(uid, iid)
-        #         if pr > 0:
-        #             dif_pred.append(np.square((float(r) / 5) - pr))
-        #             weights.append(self.weight_map[child.name])
-        #     if len(dif_pred) == 0:
-        #         result += 0
-        #     else:
-        #         result += np.average(dif_pred, weights=weights)
         rmses = []
         weights = []
         for child in self.children:
@@ -149,9 +134,10 @@ class Root(Node):
             if self.verbose > 0:
                 print('{}||epoch{},rms={}'.format(self.name, ste, rms))
             self.history.add(time.time() - self.start_time, rms)
-            if ste != epoch-1:
+            if ste != epoch - 1:
                 self.aggregator.aggregate(epoch, children_participate, 0.0, all_gradients)
                 self.aggregator.dispatch(epoch, children_participate)
+
         # rms = self.RMS(self.test_data)
         # if self.verbose > 0:
         #     print('{}||epoch_final,rms={}'.format(self.name, rms))
@@ -159,8 +145,8 @@ class Root(Node):
 
         def cut_grad(dv):
             return dv
-            #dv_cut = np.minimum(np.ones(self.K) * self.grad_max, dv)
-            #return np.maximum(-np.ones(self.K) * self.grad_max, dv_cut)
+            # dv_cut = np.minimum(np.ones(self.K) * self.grad_max, dv)
+            # return np.maximum(-np.ones(self.K) * self.grad_max, dv_cut)
 
         total_gradients_v = {iid: cut_grad(self.item_map[iid] - v_old[iid]) for iid in self.item_map.keys()}
 
