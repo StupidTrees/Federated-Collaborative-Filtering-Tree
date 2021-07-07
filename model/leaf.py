@@ -1,5 +1,6 @@
 from model.node import *
 from train.data import load_data
+import tensorflow as tf
 
 
 class Leaf(Node):
@@ -14,14 +15,15 @@ class Leaf(Node):
             self.train_data, self.test_data, users, items = load_data(file=file_name,
                                                                       shuffle=True,
                                                                       batch_size=0,
-                                                                      tensor=False,
+                                                                      tensor=True,
                                                                       test_ratio=0.3)
+
         else:
             data, users, items = data_tuple
             self.train_data = data[0:int(len(data) * 0.8)]
             self.test_data = data[int(len(data) * 0.8):]
         for uid in users:
-            self.user_map[uid] = np.random.normal(0, 0.1, k)
+            self.user_map[uid] = tf.random.normal(0, 0.1, k)
         for iid in items:
             self.item_map[iid] = np.random.normal(0, 0.1, k)
         self.average_rating = {}
