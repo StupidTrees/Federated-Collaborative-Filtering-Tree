@@ -70,17 +70,17 @@ class Leaf(Node):
             return 0
         return np.sqrt(sum / count)
 
-
-
     def user_size(self):
         return len(self.user_map.keys())
 
-    def update_v(self, v_map,hole=True):
+    def update_v(self, v_map, hole=True):
         for iid in self.item_map.keys():
             if iid in v_map.keys():
                 self.item_map[iid] = np.copy(v_map[iid])
                 if self.hole_aggregate and iid in self.tmp_gradient_map.keys() and hole:  # 挖洞策略，说明更新的v不包括自己上传的梯度，因此要再做一次自己的v更新
                     self.item_map[iid] += self.tmp_gradient_map[iid]
+        if self.verbose > 0:
+            print('{}||update,upper:{},rms={}'.format(self.name, not hole, self.RMS(self.test_data)))
 
     def apply_dp(self, iid, v_vec):
         """
@@ -93,7 +93,7 @@ class Leaf(Node):
         dv_cut = np.maximum(-np.ones(self.K) * self.grad_max, dv_cut)
         return dv_cut + np.random.laplace(0, 2 * self.grad_max / self.epsilon, self.K)
 
-    def do_train(self, epoch=10, parent_ste=0, init_lr=0.005,
+    def do_train(self, epoch=10, parent_ste=0, parent_epoch=0, init_lr=0.005,
                  trans_delay=0.5, lambda_1=0.1, lambda_2=0.1, queue=None, fake_foreign=False):
         Node.do_train(self)
         v_old = {iid: np.copy(vec) for iid, vec in self.item_map.items()}
@@ -101,6 +101,7 @@ class Leaf(Node):
         # 为每个向量设置一个Adam优化器
         v_adams_map = {iid: Adam(weights=v, lr=init_lr) for iid, v in self.item_map.items()}
         u_adams_map = {uid: Adam(weights=u, lr=init_lr) for uid, u in self.user_map.items()}
+        self.history.add(time.time() - self.start_time, self.RMS(self.test_data))
         for ste in range(epoch):
             for (uid, iid, r) in self.train_data:
                 u_vec = self.user_map[uid]
@@ -110,8 +111,10 @@ class Leaf(Node):
                 e = (float(r) / 5) - np.dot(u_vec, v_vec.T)
                 vg = (e * u_vec)
                 ug = (e * v_vec)
-                v_adams_map[iid].minimize(-vg + lambda_1 * v_vec)
-                u_adams_map[uid].minimize(-ug + lambda_1 * u_vec)
+                # self.user_map[uid] += init_lr * (ug - lambda_1 * u_vec)
+                # self.item_map[iid] += init_lr * (vg - lambda_2 * v_vec)
+                v_adams_map[iid].minimize_raw(-vg + lambda_2 * v_vec)
+                u_adams_map[uid].minimize_raw(-ug + lambda_1 * u_vec)
             rms = self.RMS(self.test_data)
             self.history.add(time.time() - self.start_time, rms)
             if self.verbose > 0:

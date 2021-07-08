@@ -10,7 +10,7 @@ class Aggregator:
 
     """
 
-    def __init__(self, asy=False, interval=50, interval_decay_rate=1.001):
+    def __init__(self, asy=False, interval=60, interval_decay_rate=1.001):
         self.initial_interval = interval
         self.asy = asy
         self.interval_decay_rate = interval_decay_rate

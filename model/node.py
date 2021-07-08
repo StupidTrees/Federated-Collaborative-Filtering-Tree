@@ -65,6 +65,7 @@ class Node:
     def train(self, queue=None,
               epoch=50,
               parent_ste=0,
+              parent_epoch=0,
               init_lr=0.005,
               lambda_1=0.1,
               lambda_2=0.1,
@@ -74,6 +75,7 @@ class Node:
         :param queue: 异步训练时用于通信的阻塞队列
         :param epoch: 本节点训练总轮次
         :param parent_ste:当前父节点的轮次
+        :param parent_epoch:当前父节点总训练轮次
         :param init_lr: 学习率初始值
         :param lambda_1: 迭代正则参数1
         :param lambda_2: 迭代正则参数2
@@ -84,16 +86,17 @@ class Node:
         if self.parent and self.parent.aggregator.asy:
             thread = Thread(target=self.do_train,
                             args=(
-                                epoch, parent_ste, init_lr, trans_delay, lambda_1,
+                                epoch, parent_ste, parent_epoch, init_lr, trans_delay, lambda_1,
                                 lambda_2,
                                 queue, fake_foreign))
             thread.start()
         else:
-            return self.do_train(epoch=epoch, parent_ste=parent_ste, init_lr=init_lr, trans_delay=trans_delay,
+            return self.do_train(epoch=epoch, parent_ste=parent_ste, parent_epoch=parent_epoch, init_lr=init_lr,
+                                 trans_delay=trans_delay,
                                  lambda_1=lambda_1,
                                  lambda_2=lambda_2, queue=None, fake_foreign=fake_foreign)
 
-    def do_train(self, epoch=10, parent_ste=0, init_lr=0.005,
+    def do_train(self, epoch=10, parent_ste=0, parent_epoch=0, init_lr=0.005,
                  trans_delay=0.5, lambda_1=0.1, lambda_2=0.1, queue=None, fake_foreign=False):
         if self.first_start:
             self.start_time = time.time()

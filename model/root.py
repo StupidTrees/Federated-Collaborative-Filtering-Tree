@@ -106,22 +106,24 @@ class Root(Node):
                     self.item_map[iid] = np.random.normal(0, 0.1, self.K)
             child.reset()
 
-    def do_train(self, epoch=10, parent_ste=0, init_lr=0.005,
+    def do_train(self, epoch=10, parent_ste=0, parent_epoch=1, init_lr=0.005,
                  trans_delay=0.5, lambda_1=0.1, lambda_2=0.1, queue=None, fake_foreign=False):
         for child in self.children:
-            child.update_v(self.item_map)
-        v_old = copy.deepcopy(self.item_map)
+            child.update_v(self.item_map, False)
+        v_old = {iid: np.copy(vec) for iid, vec in self.item_map.items()}
         self.optimizer.round_begin(init_lr)
+        self.history.add(time.time() - self.start_time, self.RMS(self.test_data))
         for ste in range(epoch):
 
             q = multiprocessing.Queue(len(self.children))
             all_gradients = {}
             children_participate = self.aggregator.draw(epoch)
             for child in children_participate:
-                gradients = child.train(init_lr=self.optimizer.get_child_init_lr(init_lr, epoch, child),
-                                        epoch=self.aggregator.get_interval(ste, epoch, child), queue=q,
-                                        lambda_1=lambda_1,
-                                        lambda_2=lambda_2)
+                gradients = child.train(queue=q, epoch=self.aggregator.get_interval(ste, epoch, child),
+                                        parent_ste=ste,
+                                        parent_epoch=epoch,
+                                        init_lr=self.optimizer.get_child_init_lr(init_lr, epoch, child),
+                                        lambda_1=lambda_1, lambda_2=lambda_2)
                 if not self.aggregator.asy:
                     time.sleep(trans_delay)
                     all_gradients[child.name] = gradients
@@ -134,21 +136,11 @@ class Root(Node):
             if self.verbose > 0:
                 print('{}||epoch{},rms={}'.format(self.name, ste, rms))
             self.history.add(time.time() - self.start_time, rms)
-            if ste != epoch - 1:
+            if parent_ste != parent_epoch - 1 or ste != epoch - 1:
                 self.aggregator.aggregate(epoch, children_participate, 0.0, all_gradients)
                 self.aggregator.dispatch(epoch, children_participate)
 
-        # rms = self.RMS(self.test_data)
-        # if self.verbose > 0:
-        #     print('{}||epoch_final,rms={}'.format(self.name, rms))
-        # self.history.add(time.time() - self.start_time, rms)
-
-        def cut_grad(dv):
-            return dv
-            # dv_cut = np.minimum(np.ones(self.K) * self.grad_max, dv)
-            # return np.maximum(-np.ones(self.K) * self.grad_max, dv_cut)
-
-        total_gradients_v = {iid: cut_grad(self.item_map[iid] - v_old[iid]) for iid in self.item_map.keys()}
+        total_gradients_v = {iid: v - v_old[iid] for iid, v in self.item_map.items()}
 
         if self.parent and self.parent.aggregator.asy and queue:
             queue.put((self.name, total_gradients_v))
