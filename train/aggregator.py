@@ -51,7 +51,7 @@ class Aggregator:
         self.activate_time += 1
         self.interval = self.initial_interval * (self.interval_decay_rate ** epoch)
         rs = max(int(np.sqrt(total_epoch)), int(self.interval))
-        return int(rs / (1 + 2 * (height - 1)))
+        return int(rs / (1 + (height - 1)))
 
     def aggregate(self, epoch, child_participate, loss, all_gradients):
         """

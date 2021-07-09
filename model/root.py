@@ -112,7 +112,7 @@ class Root(Node):
             child.update_v(self.item_map, False)
         v_old = {iid: np.copy(vec) for iid, vec in self.item_map.items()}
         self.optimizer.round_begin(init_lr)
-        self.history.add(time.time() - self.start_time, self.RMS(self.test_data))
+        # self.history.add(time.time() - self.start_time, self.RMS(self.test_data))
         for ste in range(epoch):
 
             q = multiprocessing.Queue(len(self.children))

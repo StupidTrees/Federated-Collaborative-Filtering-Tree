@@ -18,7 +18,6 @@ class Leaf(Node):
                                                                       batch_size=0,
                                                                       tensor=False,
                                                                       test_ratio=0.3)
-
         else:
             data, users, items = data_tuple
             self.train_data = data[0:int(len(data) * 0.8)]
@@ -27,6 +26,7 @@ class Leaf(Node):
             self.user_map[uid] = np.random.normal(0, 0.1, k)
         for iid in items:
             self.item_map[iid] = np.random.normal(0, 0.1, k)
+
         self.average_rating = {}
         self.epsilon = epsilon
         self.hole_aggregate = True  # 是否为挖洞aggregate策略
@@ -101,7 +101,7 @@ class Leaf(Node):
         # 为每个向量设置一个Adam优化器
         v_adams_map = {iid: Adam(weights=v, lr=init_lr) for iid, v in self.item_map.items()}
         u_adams_map = {uid: Adam(weights=u, lr=init_lr) for uid, u in self.user_map.items()}
-        self.history.add(time.time() - self.start_time, self.RMS(self.test_data))
+        # self.history.add(time.time() - self.start_time, self.RMS(self.test_data))
         for ste in range(epoch):
             for (uid, iid, r) in self.train_data:
                 u_vec = self.user_map[uid]
@@ -111,10 +111,10 @@ class Leaf(Node):
                 e = (float(r) / 5) - np.dot(u_vec, v_vec.T)
                 vg = (e * u_vec)
                 ug = (e * v_vec)
-                # self.user_map[uid] += init_lr * (ug - lambda_1 * u_vec)
-                # self.item_map[iid] += init_lr * (vg - lambda_2 * v_vec)
-                v_adams_map[iid].minimize_raw(-vg + lambda_2 * v_vec)
-                u_adams_map[uid].minimize_raw(-ug + lambda_1 * u_vec)
+                self.user_map[uid] += init_lr * (ug - lambda_1 * u_vec)
+                self.item_map[iid] += init_lr * (vg - lambda_2 * v_vec)
+                # v_adams_map[iid].minimize_raw(-vg + lambda_2 * v_vec)
+                # u_adams_map[uid].minimize_raw(-ug + lambda_1 * u_vec)
             rms = self.RMS(self.test_data)
             self.history.add(time.time() - self.start_time, rms)
             if self.verbose > 0:
