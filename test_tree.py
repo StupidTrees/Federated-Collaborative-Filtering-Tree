@@ -29,7 +29,7 @@ root_3 = tree3.root
 root_3.verbose = 1
 tree3.get_at(0, 0).verbose = 1
 root_3.expand_to_children()
-root_3.train(epoch=2, init_lr=0.09, lambda_1=0.06, lambda_2=0.06, trans_delay=0.0,
+root_3.train(epoch=4, init_lr=0.09, lambda_1=0.06, lambda_2=0.06, trans_delay=0.0,
              fake_foreign=False)
 tree3.get_at(0, 1).history.plot('4-layer-c1')
 

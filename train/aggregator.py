@@ -2,6 +2,8 @@ import random
 
 import numpy as np
 
+from model.leaf import Leaf
+
 
 class Aggregator:
     """
@@ -10,7 +12,7 @@ class Aggregator:
 
     """
 
-    def __init__(self, asy=False, interval=60, interval_decay_rate=1.001):
+    def __init__(self, asy=False, interval=60, interval_decay_rate=1.1):
         self.initial_interval = interval
         self.asy = asy
         self.interval_decay_rate = interval_decay_rate
@@ -51,7 +53,12 @@ class Aggregator:
         self.activate_time += 1
         self.interval = self.initial_interval * (self.interval_decay_rate ** epoch)
         rs = max(int(np.sqrt(total_epoch)), int(self.interval))
-        return int(rs / (1 + (height - 1)))
+        if isinstance(child, Leaf):
+            print('{}->{},interval={}'.format(self.node.name,child.name,int(rs*len(self.node.children)/8)))
+            return int(rs*len(self.node.children)/8)
+        else:
+            print('{}->{},interval={}'.format(self.node.name,child.name,int(1 + np.tanh(rs) / height)))
+            return int(1 + (np.log2(rs) / height))
 
     def aggregate(self, epoch, child_participate, loss, all_gradients):
         """
