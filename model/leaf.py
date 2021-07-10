@@ -9,7 +9,7 @@ class Leaf(Node):
     叶子节点，继承自Node
     """
 
-    def __init__(self, name, data_tuple=None, file_name=None, k=10, verbose=0, optimizer=None, epsilon=999):
+    def __init__(self, name, data_tuple=None, file_name=None, k=12, verbose=0, optimizer=None, epsilon=99999):
         Node.__init__(self, name, k=k, clients=None, verbose=verbose, optimizer=optimizer)
 
         if data_tuple is None:
@@ -111,10 +111,10 @@ class Leaf(Node):
                 e = (float(r) / 5) - np.dot(u_vec, v_vec.T)
                 vg = (e * u_vec)
                 ug = (e * v_vec)
-                # self.user_map[uid] += init_lr * (ug - lambda_1 * u_vec)
-                # self.item_map[iid] += init_lr * (vg - lambda_2 * v_vec)
-                v_adams_map[iid].minimize_raw(-vg + lambda_2 * v_vec)
-                u_adams_map[uid].minimize_raw(-ug + lambda_1 * u_vec)
+                self.user_map[uid] += init_lr * (ug - lambda_1 * u_vec)
+                self.item_map[iid] += init_lr * (vg - lambda_2 * v_vec)
+                # v_adams_map[iid].minimize_raw(-vg + lambda_2 * v_vec)
+                # u_adams_map[uid].minimize_raw(-ug + lambda_1 * u_vec)
             rms = self.RMS(self.test_data)
             self.history.add(time.time() - self.start_time, rms)
             if self.verbose > 0:
