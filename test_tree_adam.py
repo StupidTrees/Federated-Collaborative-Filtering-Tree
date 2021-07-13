@@ -17,23 +17,17 @@ def create_tree(total=80, width=4, expand_to_children=True):
 
 
 tree2 = create_tree(width=2)
-tree2.root.train(epoch=10, init_lr=0.09, lambda_1=0.06, lambda_2=0.06, trans_delay=0.0,
-                 fake_foreign=False,adam=True)
+tree2.root.train(epoch=10, init_lr=0.008, lambda_1=0.06, lambda_2=0.06, trans_delay=0.0,
+                 fake_foreign=False)
 tree2.get_at(0, 1).history.plot('2-c1')
 tree2.root.history.plot('2-root')
 
-tree2 = create_tree(width=4)
-tree2.root.train(epoch=10, init_lr=0.09, lambda_1=0.06, lambda_2=0.06, trans_delay=0.0,
-                 fake_foreign=False,adam=True)
-tree2.get_at(0, 1).history.plot('4-c1')
-tree2.root.history.plot('4-root')
 
-
-tree2 = create_tree(width=8)
-tree2.root.train(epoch=10, init_lr=0.09, lambda_1=0.06, lambda_2=0.06, trans_delay=0.0,
+tree2 = create_tree(width=2)
+tree2.root.train(epoch=10, init_lr=0.008, lambda_1=0.06, lambda_2=0.06, trans_delay=0.0,
                  fake_foreign=False,adam=True)
-tree2.get_at(0, 1).history.plot('8-c1')
-tree2.root.history.plot('8-root')
+tree2.get_at(0, 1).history.plot('2-c1-adam')
+tree2.root.history.plot('2-root-adam')
 
 plt.legend()
-plt.savefig('width-compare')
+plt.savefig('adam-compare')

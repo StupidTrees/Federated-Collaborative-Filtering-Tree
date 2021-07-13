@@ -94,7 +94,7 @@ class Leaf(Node):
         return dv_cut + np.random.laplace(0, 2 * self.grad_max / self.epsilon, self.K)
 
     def do_train(self, epoch=10, parent_ste=0, parent_epoch=0, init_lr=0.005,
-                 trans_delay=0.5, lambda_1=0.1, lambda_2=0.1, queue=None, fake_foreign=False):
+                 trans_delay=0.5, lambda_1=0.1, lambda_2=0.1, queue=None, fake_foreign=False, adam=False):
         Node.do_train(self)
         v_old = {iid: np.copy(vec) for iid, vec in self.item_map.items()}
         self.optimizer.round_begin(init_lr=init_lr)
@@ -111,10 +111,15 @@ class Leaf(Node):
                 e = (float(r) / 5) - np.dot(u_vec, v_vec.T)
                 vg = (e * u_vec)
                 ug = (e * v_vec)
-                self.user_map[uid] += init_lr * (ug - lambda_1 * u_vec)
-                self.item_map[iid] += init_lr * (vg - lambda_2 * v_vec)
-                # v_adams_map[iid].minimize_raw(-vg + lambda_2 * v_vec)
-                # u_adams_map[uid].minimize_raw(-ug + lambda_1 * u_vec)
+                # self.user_map[uid] += init_lr * (ug - lambda_1 * u_vec)
+                # self.item_map[iid] += init_lr * (vg - lambda_2 * v_vec)
+                if adam:
+                    v_adams_map[iid].minimize_raw(-vg + lambda_2 * v_vec)
+                    u_adams_map[uid].minimize_raw(-ug + lambda_1 * u_vec)
+                else:
+                    self.user_map[uid] += init_lr * (ug - lambda_1 * u_vec)
+                    self.item_map[iid] += init_lr * (vg - lambda_2 * v_vec)
+
             rms = self.RMS(self.test_data)
             self.history.add(time.time() - self.start_time, rms)
             if self.verbose > 0:

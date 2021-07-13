@@ -15,8 +15,8 @@ root_1.verbose = 1
 root_1.expand_to_children()
 tree1.get_at(0, 0).verbose = 1
 tree1.get_at(1, 0).verbose = 1
-root_1.train(epoch=10, init_lr=0.09, lambda_1=0.06, lambda_2=0.06, trans_delay=0.0,
-             fake_foreign=False)
+root_1.train(epoch=10, init_lr=0.008, lambda_1=0.06, lambda_2=0.06, trans_delay=0.0,
+             fake_foreign=False,adam=True)
 root_1.history.plot('3-layer-root')
 # tree1.get_at(0, 1).history.plot('3-layer-c1')
 
@@ -27,22 +27,21 @@ root_1.verbose = 1
 root_1.expand_to_children()
 tree1.get_at(0, 0).verbose = 1
 tree1.get_at(1, 0).verbose = 1
-root_1.train(epoch=10, init_lr=0.09, lambda_1=0.06, lambda_2=0.06, trans_delay=0.0,
-             fake_foreign=False)
+root_1.train(epoch=10, init_lr=0.008, lambda_1=0.06, lambda_2=0.06, trans_delay=0.0,
+             fake_foreign=False,adam=True)
 root_1.history.plot('3-layer-x-root')
 # tree1.get_at(0, 1).history.plot('3-layerx-c1')
 
-tree1 = build_tree_horizontal('data/full', [10, 10, 10, 10, 10, 10, 10, 10], [[2,4,2], [3]], name_prefix='t7_')
+tree1 = build_tree_horizontal('data/full', [10, 10, 10, 10, 10, 10, 10, 10], [[2, 4, 2], [3]], name_prefix='t7_')
 root_1 = tree1.root
 root_1.aggregator.initial_interval = 4
 root_1.verbose = 1
 root_1.expand_to_children()
 tree1.get_at(0, 0).verbose = 1
 tree1.get_at(1, 0).verbose = 1
-root_1.train(epoch=10, init_lr=0.09, lambda_1=0.06, lambda_2=0.06, trans_delay=0.0,
-             fake_foreign=False)
+root_1.train(epoch=10, init_lr=0.008, lambda_1=0.06, lambda_2=0.06, trans_delay=0.0,
+             fake_foreign=False,adam=True)
 root_1.history.plot('3-layer-y-root')
-
 
 # tree3 = build_tree_horizontal('data/full', [10, 10, 10, 10, 10, 10, 10, 10], [[2, 2, 2, 2], [2, 2], [2]],
 #                               name_prefix='t3_')
@@ -50,7 +49,7 @@ root_1.history.plot('3-layer-y-root')
 # root_3.verbose = 1
 # tree3.get_at(0, 0).verbose = 1
 # root_3.expand_to_children()
-# root_3.train(epoch=4, init_lr=0.09, lambda_1=0.06, lambda_2=0.06, trans_delay=0.0,
+# root_3.train(epoch=4, init_lr=0.01, lambda_1=0.06, lambda_2=0.06, trans_delay=0.0,
 #              fake_foreign=False)
 # tree3.get_at(0, 1).history.plot('4-layer-c1')
 #
@@ -61,7 +60,7 @@ root_1.history.plot('3-layer-y-root')
 # # tree2.get_at(0, 0).verbose = 1
 # root_2.verbose = 1
 # root_2.expand_to_children()
-# root_2.train(epoch=10, init_lr=0.09, lambda_1=0.06, lambda_2=0.06, trans_delay=0.0,
+# root_2.train(epoch=10, init_lr=0.01, lambda_1=0.06, lambda_2=0.06, trans_delay=0.0,
 #              fake_foreign=False)
 # tree2.get_at(0, 1).history.plot('2-layer-c1')
 #

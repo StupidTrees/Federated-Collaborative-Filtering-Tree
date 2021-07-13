@@ -69,7 +69,7 @@ class Node:
               init_lr=0.005,
               lambda_1=0.1,
               lambda_2=0.1,
-              trans_delay=0.5, fake_foreign=False):
+              trans_delay=0.5, fake_foreign=False, adam=False):
         """
         开始训练（同步或异步）
         :param queue: 异步训练时用于通信的阻塞队列
@@ -88,16 +88,16 @@ class Node:
                             args=(
                                 epoch, parent_ste, parent_epoch, init_lr, trans_delay, lambda_1,
                                 lambda_2,
-                                queue, fake_foreign))
+                                queue, fake_foreign, adam))
             thread.start()
         else:
             return self.do_train(epoch=epoch, parent_ste=parent_ste, parent_epoch=parent_epoch, init_lr=init_lr,
                                  trans_delay=trans_delay,
                                  lambda_1=lambda_1,
-                                 lambda_2=lambda_2, queue=None, fake_foreign=fake_foreign)
+                                 lambda_2=lambda_2, queue=None, fake_foreign=fake_foreign, adam=adam)
 
     def do_train(self, epoch=10, parent_ste=0, parent_epoch=0, init_lr=0.005,
-                 trans_delay=0.5, lambda_1=0.1, lambda_2=0.1, queue=None, fake_foreign=False):
+                 trans_delay=0.5, lambda_1=0.1, lambda_2=0.1, queue=None, fake_foreign=False, adam=False):
         if self.first_start:
             self.start_time = time.time()
             self.first_start = False

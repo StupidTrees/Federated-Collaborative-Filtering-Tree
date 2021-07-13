@@ -107,7 +107,7 @@ class Root(Node):
             child.reset()
 
     def do_train(self, epoch=10, parent_ste=0, parent_epoch=1, init_lr=0.005,
-                 trans_delay=0.5, lambda_1=0.1, lambda_2=0.1, queue=None, fake_foreign=False):
+                 trans_delay=0.5, lambda_1=0.1, lambda_2=0.1, queue=None, fake_foreign=False,adam=False):
         for child in self.children:
             child.update_v(self.item_map, False)
         v_old = {iid: np.copy(vec) for iid, vec in self.item_map.items()}
@@ -123,7 +123,7 @@ class Root(Node):
                                         parent_ste=ste,
                                         parent_epoch=epoch,
                                         init_lr=self.optimizer.get_child_init_lr(init_lr, epoch, child),
-                                        lambda_1=lambda_1, lambda_2=lambda_2)
+                                        lambda_1=lambda_1, lambda_2=lambda_2,adam=adam)
                 if not self.aggregator.asy:
                     time.sleep(trans_delay)
                     all_gradients[child.name] = gradients
