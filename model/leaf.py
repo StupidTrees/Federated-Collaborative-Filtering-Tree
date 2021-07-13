@@ -9,7 +9,7 @@ class Leaf(Node):
     叶子节点，继承自Node
     """
 
-    def __init__(self, name, data_tuple=None, file_name=None, k=12, verbose=0, optimizer=None, epsilon=99999):
+    def __init__(self, name, data_tuple=None, file_name=None, k=12, verbose=0, optimizer=None, epsilon=999999999999):
         Node.__init__(self, name, k=k, clients=None, verbose=verbose, optimizer=optimizer)
 
         if data_tuple is None:

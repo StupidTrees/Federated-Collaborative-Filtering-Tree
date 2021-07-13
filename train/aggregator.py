@@ -52,7 +52,7 @@ class Aggregator:
         height = self.node.height
         self.activate_time += 1
         self.interval = self.initial_interval * (self.interval_decay_rate ** epoch)
-        rs = max(int(np.sqrt(total_epoch)), int(self.interval))
+        rs = int(self.interval)#max(int(np.sqrt(total_epoch)), int(self.interval))
         if isinstance(child, Leaf):
             print('{}->{},interval={}'.format(self.node.name,child.name,int(rs*len(self.node.children)/8)))
             return int(rs*len(self.node.children)/8)
@@ -84,8 +84,8 @@ class Aggregator:
         for (iid, pairs) in self.total_grad_list_map.items():
             weights = [self.node.weight_map[cn] for cn, g in pairs]
             gradients = [g for cn, g in pairs]
-            self.total_grad_map[iid] += np.average(gradients, axis=0, weights=weights)
-            self.node.item_map[iid] += np.average(gradients, axis=0, weights=weights)
+            self.total_grad_map[iid] += np.sum(gradients, axis=0)#, weights=weights)
+            self.node.item_map[iid] += np.sum(gradients, axis=0)#, weights=weights)
 
     def dispatch(self, epoch, children_participate, from_upper=False):
         """
