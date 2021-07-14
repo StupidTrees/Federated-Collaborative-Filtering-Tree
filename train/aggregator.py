@@ -15,6 +15,7 @@ class Aggregator:
     def __init__(self, asy=False, interval=60, interval_decay_rate=1.1):
         self.initial_interval = interval
         self.asy = asy
+        self.soft = True
         self.interval_decay_rate = interval_decay_rate
         self.total_grad_list_map = {}  # {iid：[(cname1:grad1), (cname2:grad2)]}
         self.total_grad_map = {}  # {iid:grad, iid2:grad}
@@ -52,12 +53,12 @@ class Aggregator:
         height = self.node.height
         self.activate_time += 1
         self.interval = self.initial_interval * (self.interval_decay_rate ** epoch)
-        rs = int(self.interval)#max(int(np.sqrt(total_epoch)), int(self.interval))
+        rs = int(self.interval)  # max(int(np.sqrt(total_epoch)), int(self.interval))
         if isinstance(child, Leaf):
-            print('{}->{},interval={}'.format(self.node.name,child.name,int(rs*len(self.node.children)/8)))
-            return int(rs*len(self.node.children)/8)
+            print('{}->{},interval={}'.format(self.node.name, child.name, int(rs * len(self.node.children) / 8)))
+            return int(rs * len(self.node.children) / 8)
         else:
-            print('{}->{},interval={}'.format(self.node.name,child.name,int(1 + np.tanh(rs) / height)))
+            print('{}->{},interval={}'.format(self.node.name, child.name, int(1 + np.tanh(rs) / height)))
             return int(1 + (np.log2(rs) / height))
 
     def aggregate(self, epoch, child_participate, loss, all_gradients):
@@ -75,7 +76,7 @@ class Aggregator:
             for (iid, grad) in gradients.items():
                 if iid not in self.total_grad_list_map.keys():
                     self.total_grad_list_map[iid] = []
-                    self.total_grad_map[iid] = 0.0
+                    self.total_grad_map[iid] = np.zeros((self.node.K,), dtype=float)
                 self.total_grad_list_map[iid].append((cname, grad))
                 self.child_grad_map[cname][iid] = grad
         self.do_aggregate(loss)
@@ -84,8 +85,8 @@ class Aggregator:
         for (iid, pairs) in self.total_grad_list_map.items():
             weights = [self.node.weight_map[cn] for cn, g in pairs]
             gradients = [g for cn, g in pairs]
-            self.total_grad_map[iid] += np.sum(gradients, axis=0)#, weights=weights)
-            self.node.item_map[iid] += np.sum(gradients, axis=0)#, weights=weights)
+            self.total_grad_map[iid] += np.average(gradients, axis=0, weights=weights)
+            self.node.item_map[iid] += np.average(gradients, axis=0, weights=weights)
 
     def dispatch(self, epoch, children_participate, from_upper=False):
         """
@@ -99,4 +100,4 @@ class Aggregator:
             v_map_specified = {}
             # for iid, grad in self.total_grad_map.items():
             #     v_map_specified[iid] = self.node.item_map[iid]
-            child.update_v(self.node.item_map)
+            child.update_v(self.node.item_map, soft=self.soft)

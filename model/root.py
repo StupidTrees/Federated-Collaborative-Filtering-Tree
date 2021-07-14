@@ -22,6 +22,7 @@ class Root(Node):
             aggregator = HoleAggregator()
         self.aggregator = aggregator
         self.set_aggregator(aggregator)
+        self.train_data = []
         self.bind_child()
 
     def get_weight(self, child_name):
@@ -38,7 +39,7 @@ class Root(Node):
                 return pre
         return -1
 
-    def update_v(self, v_map, hole=True):
+    def update_v(self, v_map, hole=True, soft=True):
         for iid in self.item_map.keys():
             if iid in v_map.keys():
                 self.item_map[iid] = np.copy(v_map[iid])
@@ -81,6 +82,7 @@ class Root(Node):
             for iid in child.item_map.keys():
                 if iid not in self.item_map.keys():
                     self.item_map[iid] = np.random.normal(0, 0.1, self.K)
+            self.train_data += child.train_data
             self.test_data += child.test_data[0:min_test_size]  # 保证每个孩子贡献相同数量的test_data
         if self.expand_children:
             self.expand_to_children()
@@ -107,9 +109,10 @@ class Root(Node):
             child.reset()
 
     def do_train(self, epoch=10, parent_ste=0, parent_epoch=1, init_lr=0.005,
-                 trans_delay=0.5, lambda_1=0.1, lambda_2=0.1, queue=None, fake_foreign=False,adam=False):
+                 trans_delay=0.5, lambda_1=0.1, lambda_2=0.1, queue=None, fake_foreign=False, adam=False,
+                 adaptive_c=True):
         for child in self.children:
-            child.update_v(self.item_map, False)
+            child.update_v(self.item_map, hole=False, soft=False)
         v_old = {iid: np.copy(vec) for iid, vec in self.item_map.items()}
         self.optimizer.round_begin(init_lr)
         self.history.add(time.time() - self.start_time, self.RMS(self.test_data))
@@ -123,14 +126,16 @@ class Root(Node):
                                         parent_ste=ste,
                                         parent_epoch=epoch,
                                         init_lr=self.optimizer.get_child_init_lr(init_lr, epoch, child),
-                                        lambda_1=lambda_1, lambda_2=lambda_2,adam=adam)
+                                        lambda_1=lambda_1, lambda_2=lambda_2, adam=adam, adaptive_c=adaptive_c)
                 if not self.aggregator.asy:
-                    time.sleep(trans_delay)
+                    if trans_delay > 0:
+                        time.sleep(trans_delay)
                     all_gradients[child.name] = gradients
             if self.aggregator.asy:
                 for _ in range(len(self.children)):
                     client_name, gradients = q.get(block=True)
-                    time.sleep(trans_delay)
+                    if trans_delay > 0:
+                        time.sleep(trans_delay)
                     all_gradients[client_name] = gradients
             rms = self.RMS(self.test_data)
             if self.verbose > 0:

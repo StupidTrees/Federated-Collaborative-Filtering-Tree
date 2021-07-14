@@ -45,7 +45,7 @@ class Node:
         """
         for iid in iid_list:
             if int(iid) not in self.item_map.keys():
-                self.item_map[int(iid)] = np.random.normal(0, 0.1, (1, self.K))
+                self.item_map[int(iid)] = np.random.normal(0, 0.1, (self.K,))
                 self.foreign.add(iid)
 
     def RMS(self, batch):
@@ -55,6 +55,7 @@ class Node:
         """
         重置状态（权重复位）
         """
+        self.start_time = time.time()
         self.first_start = True
         for uid in self.user_map.keys():
             self.user_map[uid] = np.random.normal(0, 0.1, self.K)
@@ -69,7 +70,7 @@ class Node:
               init_lr=0.005,
               lambda_1=0.1,
               lambda_2=0.1,
-              trans_delay=0.5, fake_foreign=False, adam=False):
+              trans_delay=0.5, fake_foreign=False, adam=False, adaptive_c=True):
         """
         开始训练（同步或异步）
         :param queue: 异步训练时用于通信的阻塞队列
@@ -88,16 +89,18 @@ class Node:
                             args=(
                                 epoch, parent_ste, parent_epoch, init_lr, trans_delay, lambda_1,
                                 lambda_2,
-                                queue, fake_foreign, adam))
+                                queue, fake_foreign, adam, adaptive_c))
             thread.start()
         else:
             return self.do_train(epoch=epoch, parent_ste=parent_ste, parent_epoch=parent_epoch, init_lr=init_lr,
                                  trans_delay=trans_delay,
                                  lambda_1=lambda_1,
-                                 lambda_2=lambda_2, queue=None, fake_foreign=fake_foreign, adam=adam)
+                                 lambda_2=lambda_2, queue=None, fake_foreign=fake_foreign, adam=adam,
+                                 adaptive_c=adaptive_c)
 
     def do_train(self, epoch=10, parent_ste=0, parent_epoch=0, init_lr=0.005,
-                 trans_delay=0.5, lambda_1=0.1, lambda_2=0.1, queue=None, fake_foreign=False, adam=False):
+                 trans_delay=0.5, lambda_1=0.1, lambda_2=0.1, queue=None, fake_foreign=False, adam=False,
+                 adaptive_c=True):
         if self.first_start:
             self.start_time = time.time()
             self.first_start = False
