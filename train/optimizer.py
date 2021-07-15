@@ -1,5 +1,5 @@
 class Optimizer:
-    def __init__(self, init_lr=0.06, lr_decay_rate=0.0001):
+    def __init__(self, init_lr=0.01, lr_decay_rate=0.001):
         self.lr_decay_rate = lr_decay_rate
         self.init_lr = init_lr
         self.node = None

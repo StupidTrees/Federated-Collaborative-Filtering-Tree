@@ -85,19 +85,19 @@ class Leaf(Node):
         if self.verbose > 0:
             print('{}||update,upper:{},rms={}'.format(self.name, not hole, self.RMS(self.test_data)))
 
-    def apply_dp(self, iid, v_vec, adaptive_c,parent_epoch):
+    def apply_dp(self, iid, v_vec, adaptive_c, parent_epoch):
         """
         对v向量进行加噪处理，加入拉普拉斯分布的随机噪声使其满足epsilon-差分隐私
         :param v_vec: v向量
         :return: 差分后的
         """
         self.tmp_gradient_map[iid] = v_vec
-        dv_cut = np.minimum(np.ones(self.K) * self.grad_max, v_vec)
-        dv_cut = np.maximum(-np.ones(self.K) * self.grad_max, dv_cut)
-        c = self.grad_max
+        c = np.max(np.abs(v_vec))# self.grad_max
         if adaptive_c:
-            c = self.grad_max*(0.85**parent_epoch)
-        #print(self.name, c)
+            c = c*(0.9**parent_epoch)  # self.grad_max*(0.85**parent_epoch)
+        dv_cut = np.minimum(np.ones(self.K) * c, v_vec)
+        dv_cut = np.maximum(-np.ones(self.K) * c, dv_cut)
+        # print(self.name, c)
         return dv_cut + np.random.laplace(0, 2 * c / self.epsilon, (self.K,))
 
     def do_train(self, epoch=10, parent_ste=0, parent_epoch=0, init_lr=0.005,
@@ -129,7 +129,8 @@ class Leaf(Node):
             self.history.add(time.time() - self.start_time, rms)
             if self.verbose > 0:
                 print('{}||epoch{},rms={}'.format(self.name, ste, rms))
-        total_gradients_v = {iid: (self.apply_dp(iid, self.item_map[iid] - v_old[iid], adaptive_c,parent_ste)) for iid in
+        total_gradients_v = {iid: (self.apply_dp(iid, self.item_map[iid] - v_old[iid], adaptive_c, parent_ste)) for iid
+                             in
                              self.item_map.keys()}
         if self.parent.aggregator.asy and queue:
             queue.put((self.name, total_gradients_v))

@@ -11,3 +11,7 @@ class Tree:
     def set_grad_max(self, max):
         for node in self.layers[0]:
             node.grad_max = max
+
+    def set_epsilon(self, epsilon):
+        for node in self.layers[0]:
+            node.epsilon = epsilon
