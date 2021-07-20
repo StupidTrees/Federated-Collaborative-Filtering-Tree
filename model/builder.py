@@ -1,7 +1,7 @@
 from model.tree import Tree
 from train.data import split_data
 from model.leaf import Leaf
-from model.root import Root
+from model.coordinator import Coordinator
 
 
 def build_tree_horizontal(full_data_path, child_sizes, tree_sizes, k=10, name_prefix=''):
@@ -32,7 +32,7 @@ def build_tree_horizontal(full_data_path, child_sizes, tree_sizes, k=10, name_pr
         left = 0
         nodes = []
         for idx, sz in enumerate(layer):
-            nodes.append(Root('{}{}.{}'.format(name_prefix, height + 1, idx), k=k, clients=children[left:left + sz]))
+            nodes.append(Coordinator('{}{}.{}'.format(name_prefix, height + 1, idx), k=k, clients=children[left:left + sz]))
             left += sz
         children = nodes
     total_nodes.append(children)

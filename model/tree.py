@@ -1,3 +1,6 @@
+from model.coordinator import Coordinator
+
+
 class Tree:
     def __init__(self, name):
         self.name = name
@@ -15,3 +18,10 @@ class Tree:
     def set_epsilon(self, epsilon):
         for node in self.layers[0]:
             node.epsilon = epsilon
+
+    def set_aggregator(self, agg):
+        for layer in self.layers:
+            for node in layer:
+                if isinstance(node, Coordinator):
+                    node.aggregator = agg
+                    agg.node = node

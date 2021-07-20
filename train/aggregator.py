@@ -37,23 +37,27 @@ class Aggregator:
         :return: 选择后的子节点列表，默认为全部
         """
         percentage = 1.0
-        from model.root import Root
-        if isinstance(self.node, Root):
+        from model.coordinator import Coordinator
+        if isinstance(self.node, Coordinator):
             return random.sample(self.node.children, int(len(self.node.children) * percentage))
         return self.node.children
+
+    def round_start(self):
+        pass
 
     def get_interval(self, epoch, total_epoch, child):
         """
         决定让某个孩子独自训练多少轮（E）
         :param epoch: 当前节点的训练轮次
         :param total_epoch 当前节点需要的总训练伦茨
+        :param loss 当前在训练集上的损失
         :param child: 某个孩子
         :return: 孩子在本轮训练中，自己要进行多少轮训练
         """
         height = self.node.height
         self.activate_time += 1
         self.interval = self.initial_interval * (self.interval_decay_rate ** epoch)
-        rs = int(self.interval)  # max(int(np.sqrt(total_epoch)), int(self.interval))
+        rs = int(max(1,self.interval))  # max(int(np.sqrt(total_epoch)), int(self.interval))
         if isinstance(child, Leaf):
             print('{}->{},interval={}'.format(self.node.name, child.name, int(rs * len(self.node.children) / 8)))
             return int(rs * len(self.node.children) / 8)

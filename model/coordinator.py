@@ -1,15 +1,15 @@
-import copy
 import multiprocessing
 import random
 import time
 
 import numpy as np
 
-from train.holeaggregator import HoleAggregator
+from train.aggs.adaptiveaggregator import AdaptiveAggregator
+from train.aggs.holeaggregator import HoleAggregator
 from model.node import Node
 
 
-class Root(Node):
+class Coordinator(Node):
     """
     根节点，继承自Node
     """
@@ -19,7 +19,7 @@ class Root(Node):
         self.expand_children = expand_children
         self.weight_map = {}
         if aggregator is None:
-            aggregator = HoleAggregator()
+            aggregator = AdaptiveAggregator()
         self.aggregator = aggregator
         self.set_aggregator(aggregator)
         self.train_data = []
@@ -94,7 +94,7 @@ class Root(Node):
             child.expand_v(self.item_map.keys())
             if assign_test_data:
                 child.test_data = self.test_data
-            if recursive and isinstance(child, Root):
+            if recursive and isinstance(child, Coordinator):
                 child.expand_to_children(assign_test_data, recursive)
 
     def reset(self):
@@ -116,13 +116,15 @@ class Root(Node):
         v_old = {iid: np.copy(vec) for iid, vec in self.item_map.items()}
         self.optimizer.round_begin(init_lr)
         self.history.add(time.time() - self.start_time, self.RMS(self.test_data))
+        self.aggregator.round_start()
         for ste in range(epoch):
 
             q = multiprocessing.Queue(len(self.children))
             all_gradients = {}
             children_participate = self.aggregator.draw(epoch)
             for child in children_participate:
-                gradients = child.train(queue=q, epoch=self.aggregator.get_interval(ste, epoch, child),
+                gradients = child.train(queue=q,
+                                        epoch=self.aggregator.get_interval(ste, epoch, child),
                                         parent_ste=ste,
                                         parent_epoch=epoch,
                                         init_lr=self.optimizer.get_child_init_lr(init_lr, epoch, child),

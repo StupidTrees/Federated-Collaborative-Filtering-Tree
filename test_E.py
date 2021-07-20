@@ -1,10 +1,8 @@
 # coding=utf-8
 from matplotlib import pyplot as plt
 
-import train.aggregator
+import train.aggs
 from model.builder import build_tree_horizontal
-from exp import agg6, agg4
-
 
 # FedSGD
 from model.leaf import Leaf
