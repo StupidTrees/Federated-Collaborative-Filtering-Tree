@@ -26,8 +26,8 @@ class AdaptiveAggregator(HoleAggregator):
             self.last_ste = epoch
         E = int(max(2, self.interval))
         if isinstance(child, Leaf):
-            print('{}->{},interval={}'.format(self.node.name, child.name, E))
+            #print('{}->{},interval={}'.format(self.node.name, child.name, E))
             return E
         else:
-            print('{}->{},interval={}'.format(self.node.name, child.name, int(1 + np.tanh(E) / height)))
-            return int(1 + (np.log2(E) / height))
+            #print('{}->{},interval={}'.format(self.node.name, child.name, int(2 + np.tanh(E) / height)))
+            return int(2 + (np.tanh(E) / height))

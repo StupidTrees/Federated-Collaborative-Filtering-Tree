@@ -23,6 +23,7 @@ class Coordinator(Node):
         self.aggregator = aggregator
         self.set_aggregator(aggregator)
         self.train_data = []
+        self.tmp_gradient_map = {}
         self.bind_child()
 
     def get_weight(self, child_name):
@@ -40,10 +41,14 @@ class Coordinator(Node):
         return -1
 
     def update_v(self, v_map, hole=True, soft=True):
+
         for iid in self.item_map.keys():
             if iid in v_map.keys():
                 self.item_map[iid] = np.copy(v_map[iid])
+                if hole:  # 挖洞策略，说明更新的v不包括自己上传的梯度，因此要再做一次自己的v更新
+                    self.item_map[iid] += self.tmp_gradient_map[iid]
         self.aggregator.dispatch(-1, self.children, False)
+
         # for child in self.children:
         #     child.update_v(v_map, False)
 
@@ -108,6 +113,10 @@ class Coordinator(Node):
                     self.item_map[iid] = np.random.normal(0, 0.1, self.K)
             child.reset()
 
+    def apply_dp(self, iid, vec):
+        self.tmp_gradient_map[iid] = vec
+        return vec
+
     def do_train(self, epoch=10, parent_ste=0, parent_epoch=1, init_lr=0.005,
                  trans_delay=0.5, lambda_1=0.1, lambda_2=0.1, queue=None, fake_foreign=False, adam=False,
                  adaptive_c=True):
@@ -147,8 +156,7 @@ class Coordinator(Node):
                 self.aggregator.aggregate(epoch, children_participate, 0.0, all_gradients)
                 self.aggregator.dispatch(epoch, children_participate)
 
-        total_gradients_v = {iid: v - v_old[iid] for iid, v in self.item_map.items()}
-
+        total_gradients_v = {iid: self.apply_dp(iid, v - v_old[iid]) for iid, v in self.item_map.items()}
         if self.parent and self.parent.aggregator.asy and queue:
             queue.put((self.name, total_gradients_v))
         return total_gradients_v

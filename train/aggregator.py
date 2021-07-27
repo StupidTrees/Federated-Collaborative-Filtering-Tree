@@ -57,7 +57,7 @@ class Aggregator:
         height = self.node.height
         self.activate_time += 1
         self.interval = self.initial_interval * (self.interval_decay_rate ** epoch)
-        rs = int(max(1,self.interval))  # max(int(np.sqrt(total_epoch)), int(self.interval))
+        rs = int(max(1, self.interval))  # max(int(np.sqrt(total_epoch)), int(self.interval))
         if isinstance(child, Leaf):
             print('{}->{},interval={}'.format(self.node.name, child.name, int(rs * len(self.node.children) / 8)))
             return int(rs * len(self.node.children) / 8)
@@ -74,6 +74,19 @@ class Aggregator:
             格式为{孩子名称1：{商品1：[梯度1，梯度2...]，商品2:[梯度1，梯度2]}，孩子名称2:...}
         :return:
         """
+        # 如果不是在叶子上集中，则使用权重平均而非梯度
+        # if self.node.height > 1:
+        #     v_map = {}
+        #     for child in self.node.children:
+        #         for (iid, v) in child.item_map.items():
+        #             if iid not in v_map.keys():
+        #                 v_map[iid] = []
+        #             v_map[iid].append((child.name, v))
+        #     for (iid, vs) in v_map.items():
+        #         vl = [v for cn, v in vs]
+        #         weights = [self.node.weight_map[cn] for cn, v in vs]
+        #         self.node.item_map[iid] = np.average(vl, axis=0, weights=weights)
+        #     return
         for cname, gradients in all_gradients.items():
             if cname not in self.child_grad_map.keys():
                 self.child_grad_map[cname] = {}
