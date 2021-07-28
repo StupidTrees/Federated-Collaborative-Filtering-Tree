@@ -45,8 +45,8 @@ class Coordinator(Node):
         for iid in self.item_map.keys():
             if iid in v_map.keys():
                 self.item_map[iid] = np.copy(v_map[iid])
-                if hole:  # 挖洞策略，说明更新的v不包括自己上传的梯度，因此要再做一次自己的v更新
-                    self.item_map[iid] += self.tmp_gradient_map[iid]
+                # if hole:  # 挖洞策略，说明更新的v不包括自己上传的梯度，因此要再做一次自己的v更新
+                #    self.item_map[iid] += self.tmp_gradient_map[iid]
         self.aggregator.dispatch(-1, self.children, False)
 
         # for child in self.children:

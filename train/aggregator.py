@@ -75,18 +75,18 @@ class Aggregator:
         :return:
         """
         # 如果不是在叶子上集中，则使用权重平均而非梯度
-        # if self.node.height > 1:
-        #     v_map = {}
-        #     for child in self.node.children:
-        #         for (iid, v) in child.item_map.items():
-        #             if iid not in v_map.keys():
-        #                 v_map[iid] = []
-        #             v_map[iid].append((child.name, v))
-        #     for (iid, vs) in v_map.items():
-        #         vl = [v for cn, v in vs]
-        #         weights = [self.node.weight_map[cn] for cn, v in vs]
-        #         self.node.item_map[iid] = np.average(vl, axis=0, weights=weights)
-        #     return
+        if self.node.height > 1:
+            v_map = {}
+            for child in self.node.children:
+                for (iid, v) in child.item_map.items():
+                    if iid not in v_map.keys():
+                        v_map[iid] = []
+                    v_map[iid].append((child.name, v))
+            for (iid, vs) in v_map.items():
+                vl = [v for cn, v in vs]
+                weights = [self.node.weight_map[cn] for cn, v in vs]
+                self.node.item_map[iid] = np.average(vl, axis=0, weights=weights)
+            return
         for cname, gradients in all_gradients.items():
             if cname not in self.child_grad_map.keys():
                 self.child_grad_map[cname] = {}

@@ -20,7 +20,7 @@ tree1 = build_tree_horizontal('data/full', [10, 10, 10, 10, 10, 10, 10, 10], [[2
 root_1 = tree1.root
 root_1.verbose = 1
 root_1.expand_to_children()
-root_1.train(epoch=4, init_lr=0.008, lambda_1=0.06, lambda_2=0.06, trans_delay=0.0,
+root_1.train(epoch=5, init_lr=0.008, lambda_1=0.06, lambda_2=0.06, trans_delay=0.0,
              fake_foreign=False, adam=True)
 root_1.history.plot('4-layer-root')
 tree1.get_at(0, 0).history.plot('4-layer-0,0')
@@ -28,6 +28,7 @@ tree1.get_at(0, 1).history.plot('4-layer-0,1')
 tree1.get_at(1, 0).history.plot('4-layer-1,0')
 tree1.get_at(1, 1).history.plot('4-layer-1,1')
 tree1.get_at(2, 0).history.plot('4-layer-2,0')
+tree1.get_at(2, 0).history.plot('4-layer-2,1')
 #
 # tree2 = build_tree_horizontal('data/full', [10, 10, 10, 10, 10, 10, 10, 10], [[8]], name_prefix='t2_')
 # root_2 = tree2.root

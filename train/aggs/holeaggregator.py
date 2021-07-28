@@ -8,8 +8,8 @@ class HoleAggregator(Aggregator):
             v_map_specified = {}
             for iid, grad in self.total_grad_map.items():
                 make_it_up = 0
-                if iid in self.child_grad_map[child.name].keys() and isinstance(child,
-                                                                                leaf.Leaf) and not from_upper:
+                if iid in self.child_grad_map[child.name].keys() and not from_upper and isinstance(child,
+                                                                                                   leaf.Leaf):
                     make_it_up = self.child_grad_map[child.name][iid]
                 v_map_specified[iid] = self.node.item_map[iid] - self.node.get_weight(child.name) * make_it_up
             child.update_v(v_map_specified, not from_upper, soft=self.soft)
